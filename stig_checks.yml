@@ -51,6 +51,4 @@
 
     - name: Display custom zone target
       ansible.builtin.debug:
-        msg: "{{ public_zone.stdout_lines
-                 | select('match', '^target:')
-                 | list }}"
+        var: public_zone.stdout_lines
