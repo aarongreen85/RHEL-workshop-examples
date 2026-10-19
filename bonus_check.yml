@@ -1,0 +1,25 @@
+---
+- name: STIG audit - SSH configuration permissions
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check SSH daemon configuration metadata
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config
+      register: ssh_config
+
+    - name: Verify SSH configuration ownership and permissions
+      ansible.builtin.assert:
+        that:
+          - ssh_config.stat.exists
+          - ssh_config.stat.pw_name == "root"
+          - ssh_config.stat.gr_name == "root"
+          - ssh_config.stat.mode == "0600"
+        fail_msg: >-
+          SSH configuration failed the ownership or permissions
+          check on {{ inventory_hostname }}.
+        success_msg: >-
+          SSH configuration ownership and permissions passed
+          on {{ inventory_hostname }}.
