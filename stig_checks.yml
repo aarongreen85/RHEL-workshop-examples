@@ -45,12 +45,12 @@
 
     - name: Get custom zone configuration
       ansible.builtin.command:
-        cmd: firewall-cmd --info-zone=custom
-      register: custom_zone
+        cmd: firewall-cmd --info-zone=public
+      register: public_zone
       changed_when: false
 
     - name: Display custom zone target
       ansible.builtin.debug:
-        msg: "{{ custom_zone.stdout_lines
+        msg: "{{ public_zone.stdout_lines
                  | select('match', '^target:')
                  | list }}"
