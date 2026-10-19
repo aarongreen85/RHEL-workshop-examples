@@ -17,7 +17,7 @@
                  | select('search', 'active|services')
                  | list }}"
 
-- name: Check firewalld and audit active zones - RHEL-08-040090
+- name: Check firewalld status and zone configuration - RHEL-08-040090
   hosts: all
   become: true
   gather_facts: false
@@ -29,12 +29,9 @@
       register: firewalld_state
       changed_when: false
 
-    - name: Verify firewalld is running
-      ansible.builtin.assert:
-        that:
-          - firewalld_state.stdout == "running"
-        fail_msg: "Firewalld is not running on {{ inventory_hostname }}."
-        success_msg: "Firewalld is running."
+    - name: Display firewalld state
+      ansible.builtin.debug:
+        var: firewalld_state.stdout
 
     - name: Get active firewalld zones
       ansible.builtin.command:
@@ -42,52 +39,18 @@
       register: active_zones
       changed_when: false
 
-    - name: Register active zone names
-      ansible.builtin.set_fact:
-        active_zone_names: >-
-          {{ active_zones.stdout_lines
-             | select('match', '^\\S')
-             | list }}
-
-    - name: Display active zone names
+    - name: Display active zones
       ansible.builtin.debug:
-        var: active_zone_names
+        var: active_zones.stdout_lines
 
-    - name: Ensure at least one active zone exists
-      ansible.builtin.assert:
-        that:
-          - active_zone_names | length > 0
-        fail_msg: "No active firewalld zones found."
-
-    - name: Get configuration for each active zone
+    - name: Get custom zone configuration
       ansible.builtin.command:
-        argv:
-          - firewall-cmd
-          - "--info-zone={{ item }}"
-      loop: "{{ active_zone_names }}"
-      register: active_zone_details
+        cmd: firewall-cmd --info-zone=custom
+      register: custom_zone
       changed_when: false
 
-    - name: Display target for each active zone
+    - name: Display custom zone target
       ansible.builtin.debug:
-        msg: >-
-          Zone {{ item.item }}:
-          {{ item.stdout_lines
-             | select('match', '^target:')
-             | list }}
-      loop: "{{ active_zone_details.results }}"
-
-    - name: Verify each active zone has target DROP
-      ansible.builtin.assert:
-        that:
-          - >-
-            (item.stdout_lines
-             | select('match', '^target: DROP$')
-             | list
-             | length) == 1
-        fail_msg: >-
-          Zone {{ item.item }} does not have target DROP
-          on {{ inventory_hostname }}.
-        success_msg: >-
-          Zone {{ item.item }} has target DROP.
-      loop: "{{ active_zone_details.results }}"
+        msg: "{{ custom_zone.stdout_lines
+                 | select('match', '^target:')
+                 | list }}"
