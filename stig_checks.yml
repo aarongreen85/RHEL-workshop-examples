@@ -25,9 +25,7 @@
   tasks:
     - name: Check firewalld state
       ansible.builtin.command:
-        argv:
-          - firewall-cmd
-          - --state
+        cmd: firewall-cmd --state
       register: firewalld_state
       changed_when: false
 
@@ -40,9 +38,7 @@
 
     - name: Get active firewalld zones
       ansible.builtin.command:
-        argv:
-          - firewall-cmd
-          - --get-active-zones
+        cmd: firewall-cmd --get-active-zones
       register: active_zones
       changed_when: false
 
